@@ -1,6 +1,6 @@
 import logo from './logo.svg';
 import './App.css';
-// import * as tf from '@tensorflow/tfjs';
+import * as tf from '@tensorflow/tfjs';
 
 const handleRunTraining = (event) => {
   console.log('Run training');
@@ -10,8 +10,11 @@ const handleRunTraining = (event) => {
   // model.compile({ optimizer: tf.train.adam(0.1), loss: 'meanSquaredError' });
   // model.summary();
 
-  // const xs = tf.tensor2d([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [7, 1]);
-  // const ys = tf.tensor2d([-3.0, -1.0, 2.0, 3.0, 5.0, 7.0, 10.0], [7, 1]);
+  const xs = tf.tensor2d([-1.0, 0.0, 1.0, 2.0, 3.0, 4.0, 5.0], [7, 1]);
+  const ys = tf.tensor2d([-3.0, -1.0, 2.0, 3.0, 5.0, 7.0, 10.0], [7, 1]);
+
+  console.log('xs:' + xs)
+  console.log('ys:' + ys)
 
   // doTraining(model, xs, ys).then(() => {
   //   let prediction = model.predict(tf.tensor2d([8.0], [1,1]));
