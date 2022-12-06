@@ -3,15 +3,19 @@ import './App.css';
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 import '@tensorflow/tfjs-backend-webgl';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import WebcamComponent from './webcam';
+import Webcam from 'react-webcam';
 
 
 
 // https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/posenet
+// https://upmostly.com/ultimate-reactjs-cheat-sheet
 
 function App() {
 
   const [model, setModel] = useState(null);
+  const webcamRef = useRef(null);
 
   async function loadPosenet() {
 
@@ -37,19 +41,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-
+        <WebcamComponent webcamRef={webcamRef}/>
       </header>
     </div>
   );
