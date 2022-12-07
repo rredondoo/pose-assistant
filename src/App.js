@@ -5,9 +5,9 @@ import * as posenet from '@tensorflow-models/posenet';
 import '@tensorflow/tfjs-backend-webgl';
 import React, { useEffect, useState, useRef } from 'react';
 import WebcamComponent from './webcam';
+import CanvasComponent from './canvas';
 import { drawKeypoints, drawSkeleton } from './utilities';
 import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
-import Webcam from 'react-webcam';
 
 
 
@@ -16,7 +16,7 @@ import Webcam from 'react-webcam';
 
 function App() {
 
-  const intervalTimeMS = 2000;
+  const intervalTimeMS = 500;
   const [model, setModel] = useState(null);
   const webcamRef = useRef(null);
   const poseEstimationInterval = useRef(null);
@@ -62,13 +62,14 @@ function App() {
         // pose estimation
         let start = new Date().getTime();
         model.estimateSinglePose(video, {
-          flipHorizontal: false
+          flipHorizontal: true
+
         }).then(pose => {
           let end = new Date().getTime();
           let total = end - start;
+
           console.log('Time: ' + total + 'ms');
-          console.log('TF BACKEND: ' + tf.getBackend());
-          console.log('POSE: ' + pose);
+          // console.log('TF BACKEND: ' + tf.getBackend());
 
           drawCanvas(pose, videoWidth, videoHeight, canvasRef)
         });
@@ -103,22 +104,11 @@ function App() {
     canvas.current.height = videoHeight;
 
     // extract keypoints from the pose object
+    let keypoints = pose['keypoints'];
     let minConfidence = 0.5;
 
-    drawKeypoints(pose['keypoints'], minConfidence, context);
-    drawSkeleton(pose['keypoints'], minConfidence, context);
-  };
-
-  const canvasStyle = {
-    position: "absolute",
-    marginLeft: "auto",
-    marginRight: "auto",
-    left: 0,
-    right: 0,
-    textAlign: "center",
-    zindex: 9,
-    width: '100%',
-    height: 600
+    drawKeypoints(keypoints, minConfidence, context);
+    drawSkeleton(keypoints, minConfidence, context);
   };
 
   const handleClick = React.useCallback(() => {
@@ -127,63 +117,13 @@ function App() {
         : FACING_MODE_ENVIRONMENT
   )}, []);
 
-  // return (
-  //   <div className="App">
-  //     <header className="App-header">
-  //       <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/>
-  //       <canvas ref={canvasRef} style={canvasStyle}/>
-  //     </header>
-  //     <div>
-  //       <button onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button>
-  //       <button onClick={handleClick}>Switch camera</button>
-  //     </div>
-  //   </div>
-  // );
-
   return (
     <div className="App">
       <header className="App-header">
-        <Webcam
-          ref={webcamRef}
-          mirrored={true}
-          style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zindex: 9,
-            width: 800,
-            height: 600,
-          }}
-        />
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            marginLeft: "auto",
-            marginRight: "auto",
-            left: 0,
-            right: 0,
-            textAlign: "center",
-            zindex: 9,
-            width: 800,
-            height: 600,
-          }}
-        />
-        <button style={{
-          position: "relative",
-          marginLeft: "auto",
-          marginRight: "auto",
-          top: 320,
-          left: 0,
-          right: 0,
-          textAlign: "center",
-          zindex: 9
-          }} onClick={handlePoseEstimation}>
-          {isPoseEstimation ? "Stop" : "Start"}
-        </button>
+      <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/>
+      <CanvasComponent canvasRef={canvasRef}/>
+        <button className="start-button" onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button>
+        <button onClick={handleClick}>Switch camera</button>
       </header>
     </div>
   );
