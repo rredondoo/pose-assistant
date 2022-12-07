@@ -88,8 +88,10 @@ function App() {
 
   const handlePoseEstimation = () => {
 
-    if (isPoseEstimation)
+    if (isPoseEstimation){
       stopPoseEstimation();
+      clearCanvas(canvasRef);
+    }
 
     else
       startPoseEstimation();
@@ -109,6 +111,14 @@ function App() {
 
     drawKeypoints(keypoints, minConfidence, context);
     drawSkeleton(keypoints, minConfidence, context);
+  };
+
+  const clearCanvas = (canvas) => {
+    const context = canvas.current.getContext('2d');
+    const width = canvas.current.width;
+    const height = canvas.current.height;
+
+    context.clearRect(0, 0, width, height)
   };
 
   const handleClick = React.useCallback(() => {
