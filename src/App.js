@@ -2,6 +2,7 @@ import logo from './logo.svg';
 import './App.css';
 import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
 import { FormControl, InputLabel, NativeSelect, FormHelperText } from '@material-ui/core';
+import { Snackbar } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import React, { useEffect, useState, useRef } from 'react';
 
@@ -10,10 +11,23 @@ import * as posenet from '@tensorflow-models/posenet';
 import '@tensorflow/tfjs-backend-webgl';
 import WebcamComponent from './webcam';
 import CanvasComponent from './canvas';
+import AlertComponent from './alert';
 import { drawKeypoints, drawSkeleton } from './utilities';
 import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
+import { time } from '@tensorflow/tfjs';
 
+class State {
+  static Collecting = new State('collecting');
+  static Waiting = new State('waiting');
 
+  constructor(state) {
+    this.name = state;
+  }
+
+  toString() {
+    return this.name;
+  }
+}
 
 // https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/posenet
 // https://upmostly.com/ultimate-reactjs-cheat-sheet
@@ -41,16 +55,31 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
+const delay = (time) => {
+  return new Promise((resolve, reject) => {
+    if (isNaN(time)) {
+      reject(new Error('delay: not a valid number.'));
+    } else {
+      setTimeout(resolve, time);
+    }
+  });
+};
+
 function App() {
   const intervalTimeMS = 500;
   const classes = useStyles();
+  let state = State.Waiting;
 
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const poseEstimationInterval = useRef(null);
+
   const [model, setModel] = useState(null);
   const [isPoseEstimation, setIsPoseEstimation] = useState(false);
   const [facingMode, setFacingMode] = useState(FACING_MODE_USER);
+  const [opCollectData, setOpCollectData] = useState('inactive');
+  const [snackbarDataColl, setSnackbarDataColl] = useState(false);
+  const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
 
   // useEffect hook persist object between refreshes
   useEffect(() => {
@@ -99,6 +128,12 @@ function App() {
           console.log('Time: ' + total + 'ms');
           // console.log('TF BACKEND: ' + tf.getBackend());
 
+          console.log('STATE:   ' + state.toString());
+
+          if (state == 'collecting') {
+            console.log(workoutState.workout);
+          }
+
           drawCanvas(pose, videoWidth, videoHeight, canvasRef)
         });
 
@@ -114,17 +149,67 @@ function App() {
 
   const stopPoseEstimation = () => clearInterval(poseEstimationInterval.current);
 
-  const handlePoseEstimation = () => {
+  const openSnackbarDataColl = () => {
+    setSnackbarDataColl(true);
+  };
 
-    if (isPoseEstimation){
-      stopPoseEstimation();
-      clearCanvas(canvasRef);
+  const closeSnackbarDataColl = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
     }
+    setSnackbarDataColl(false);
+  };
 
-    else
-      startPoseEstimation();
+  const openSnackbarDataNotColl = () => {
+    setSnackbarDataNotColl(true);
+  };
 
-    setIsPoseEstimation(current => !current)
+  const closeSnackbarDataNotColl = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setSnackbarDataNotColl(false);
+  };
+
+  const collectData = async () => {
+
+    setOpCollectData('active');
+    await delay(10000); // 10s delay
+
+    openSnackbarDataColl();
+    state = State.Collecting;
+
+    await delay(10000); // run data collection for 10 seconds
+
+    openSnackbarDataNotColl();
+    state = State.Waiting;
+    setOpCollectData('inactive');
+
+  };
+
+  const handlePoseEstimation = (input) => {
+
+    if (input === 'COLLECT_DATA') {
+      if (isPoseEstimation){
+        if (opCollectData === 'inactive') {
+          setIsPoseEstimation(current => !current);
+          stopPoseEstimation();
+          state = State.Waiting;
+          clearCanvas(canvasRef);
+          console.debug('stopped pose estimation')
+        } else {
+          console.debug('nothing')
+        }
+
+      } else {
+        if (workoutState.workout.length > 0) {
+          setIsPoseEstimation(current => !current);
+          startPoseEstimation();
+          collectData();
+          console.debug('started pose estimation')
+        }
+      }
+    }
   };
 
   const drawCanvas = (pose, videoWidth, videoHeight, canvas) => {
@@ -244,8 +329,10 @@ function App() {
                   </FormControl>
                   <Toolbar>
                     <Typography style={{ marginRight: 16 }}>
-                      <Button style={{ marginRight: 16 }} variant='contained'>
-                        Collect Data
+                      <Button onClick={() => handlePoseEstimation('COLLECT_DATA')}
+                              color={isPoseEstimation ? 'secondary' : 'default'}
+                              style={{ marginRight: 16 }} variant='contained'>
+                        {isPoseEstimation? 'Stop' : 'Collect Data'}
                       </Button>
                       <Button variant='contained'>
                         Train Model
@@ -258,8 +345,17 @@ function App() {
           </Card>
         </Grid>
       </Grid>
-        {/* <button className="start-button" onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button> */}
         <button onClick={handleClick}>Switch camera</button>
+      <Snackbar open={snackbarDataColl} autoHideDuration={5000} onClose={closeSnackbarDataColl}>
+        <AlertComponent onClose={closeSnackbarDataColl} severity='info'>
+          Started collecting pose data!!
+        </AlertComponent>
+      </Snackbar>
+      <Snackbar open={snackbarDataNotColl} autoHideDuration={5000} onClose={closeSnackbarDataNotColl}>
+        <AlertComponent onClose={closeSnackbarDataNotColl} severity='success'>
+          Finished collecting pose data!!
+        </AlertComponent>
+      </Snackbar>
     </div>
   );
 }
