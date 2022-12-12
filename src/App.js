@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
 import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
+import { FormControl, InputLabel, NativeSelect, FormHelperText } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 import React, { useEffect, useState, useRef } from 'react';
 
@@ -17,7 +18,7 @@ import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
 // https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/posenet
 // https://upmostly.com/ultimate-reactjs-cheat-sheet
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
   backgroundAppBar: {
     background: '#1875d2'
   },
@@ -28,6 +29,15 @@ const useStyles = makeStyles(() => ({
   statsCard: {
     width: '250px',
     margin: '10px'
+  },
+  singleLine: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  formControl: {
+    margin: theme.spacing(1),
+    minWidth: 120
   }
 }));
 
@@ -145,6 +155,20 @@ function App() {
         : FACING_MODE_ENVIRONMENT
   )}, []);
 
+  const [workoutState, setWorkoutState] = useState({
+    workout: '',
+    name: 'hai'
+  });
+
+  const handleWorkoutSelect = (event) => {
+    const name = event.target.name;
+    setWorkoutState({
+      ...workoutState,
+      [name]: event.target.value
+      // name: event.target.value
+    });
+  };
+
   return (
     <div className="App">
       <Grid container spacing={3}>
@@ -202,6 +226,31 @@ function App() {
                         </Typography>
                       </CardContent>
                     </Card>
+                  </Toolbar>
+                </Grid>
+                <Grid item xs={12} className={classes.singleLine}>
+                  <FormControl required className={classes.formControl}>
+                    <InputLabel htmlFor='age-native-helper'>Workout</InputLabel>
+                    <NativeSelect value={workoutState.workout} onChange={handleWorkoutSelect} inputProps={{
+                      name: 'workout',
+                      id: 'age-native-helper'
+                    }}>
+                      <option aria-label='None' value=''></option>
+                      <option value={'JUMPING_JACKS'}>Jumping Jacks</option>
+                      <option value={'WALL_SIT'}>Wall-sit</option>
+                      <option value={'LUNGES'}>Lunges</option>
+                    </NativeSelect>
+                    <FormHelperText>Select training data type</FormHelperText>
+                  </FormControl>
+                  <Toolbar>
+                    <Typography style={{ marginRight: 16 }}>
+                      <Button style={{ marginRight: 16 }} variant='contained'>
+                        Collect Data
+                      </Button>
+                      <Button variant='contained'>
+                        Train Model
+                      </Button>
+                    </Typography>
                   </Toolbar>
                 </Grid>
               </Grid>
