@@ -1,6 +1,7 @@
 import logo from './logo.svg';
 import './App.css';
-import { Grid } from '@material-ui/core';
+import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
+import { makeStyles } from '@material-ui/core/styles';
 import React, { useEffect, useState, useRef } from 'react';
 
 import * as tf from '@tensorflow/tfjs';
@@ -16,9 +17,24 @@ import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
 // https://github.com/tensorflow/tfjs-models/tree/master/pose-detection/src/posenet
 // https://upmostly.com/ultimate-reactjs-cheat-sheet
 
-function App() {
+const useStyles = makeStyles(() => ({
+  backgroundAppBar: {
+    background: '#1875d2'
+  },
+  title: {
+    flexGrow: 1,
+    textAlign: 'left'
+  },
+  statsCard: {
+    width: '250px',
+    margin: '10px'
+  }
+}));
 
+function App() {
   const intervalTimeMS = 500;
+  const classes = useStyles();
+
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
   const poseEstimationInterval = useRef(null);
@@ -133,15 +149,66 @@ function App() {
     <div className="App">
       <Grid container spacing={3}>
         <Grid item xs={12}>
+          <AppBar position='static' className={classes.backgroundAppBar}>
+            <Toolbar variant='dense'>
+              <Typography variant='h6' color='inherit' className={classes.title}>
+                Pose Assistant
+              </Typography>
+              <Button color='inherit'>Start Workout</Button>
+              <Button color='inherit'>History</Button>
+              <Button color='inherit'>Reset</Button>
+            </Toolbar>
+          </AppBar>
         </Grid>
       </Grid>
       <Grid container spacing={3}>
         <Grid item xs={12}>
-
+          <Card>
+            <CardContent >
+              <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/>
+              <CanvasComponent canvasRef={canvasRef}/>
+            </CardContent>
+            <CardActions style={{justifyContent: 'center'}}>
+              <Grid container spacing={0}>
+                <Grid item xs={12}>
+                  <Toolbar style={{justifyContent: 'center'}}>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color='textSecondary' gutterBottom>
+                          Jumping Jacks
+                        </Typography>
+                        <Typography variant='h2' component='h2' color='secondary'>
+                          75
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color='textSecondary' gutterBottom>
+                          Wall-sit
+                        </Typography>
+                        <Typography variant='h2' component='h2' color='secondary'>
+                          200
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                    <Card className={classes.statsCard}>
+                      <CardContent>
+                        <Typography className={classes.title} color='textSecondary' gutterBottom>
+                          Lunges
+                        </Typography>
+                        <Typography variant='h2' component='h2' color='secondary'>
+                          5
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Toolbar>
+                </Grid>
+              </Grid>
+            </CardActions>
+          </Card>
         </Grid>
       </Grid>
-      {/* <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/> */}
-      {/* <CanvasComponent canvasRef={canvasRef}/> */}
         {/* <button className="start-button" onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button> */}
         <button onClick={handleClick}>Switch camera</button>
     </div>

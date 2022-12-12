@@ -2,13 +2,14 @@ import React, {useState, useRef} from 'react';
 import Webcam from 'react-webcam';
 
 
-export const FACING_MODE_USER = "user";
-export const FACING_MODE_ENVIRONMENT = "environment";
+export const FACING_MODE_USER = 'user';
+export const FACING_MODE_ENVIRONMENT = 'environment';
 
 const WebcamComponent = ({webcamRef, facingMode}) => {
 
     const style = {
-        position: 'absolute',
+        marginTop: '10px',
+        marginBottom: '10px',
         marginLeft: 'auto',
         marginRight: 'auto',
         left: 0,
