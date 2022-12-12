@@ -1,9 +1,11 @@
 import logo from './logo.svg';
 import './App.css';
+import { Grid } from '@material-ui/core';
+import React, { useEffect, useState, useRef } from 'react';
+
 import * as tf from '@tensorflow/tfjs';
 import * as posenet from '@tensorflow-models/posenet';
 import '@tensorflow/tfjs-backend-webgl';
-import React, { useEffect, useState, useRef } from 'react';
 import WebcamComponent from './webcam';
 import CanvasComponent from './canvas';
 import { drawKeypoints, drawSkeleton } from './utilities';
@@ -17,11 +19,11 @@ import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
 function App() {
 
   const intervalTimeMS = 500;
-  const [model, setModel] = useState(null);
   const webcamRef = useRef(null);
-  const poseEstimationInterval = useRef(null);
-  const [isPoseEstimation, setIsPoseEstimation] = useState(false);
   const canvasRef = useRef(null);
+  const poseEstimationInterval = useRef(null);
+  const [model, setModel] = useState(null);
+  const [isPoseEstimation, setIsPoseEstimation] = useState(false);
   const [facingMode, setFacingMode] = useState(FACING_MODE_USER);
 
   // useEffect hook persist object between refreshes
@@ -129,12 +131,19 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header">
-      <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/>
-      <CanvasComponent canvasRef={canvasRef}/>
-        <button className="start-button" onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+        </Grid>
+      </Grid>
+      <Grid container spacing={3}>
+        <Grid item xs={12}>
+
+        </Grid>
+      </Grid>
+      {/* <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/> */}
+      {/* <CanvasComponent canvasRef={canvasRef}/> */}
+        {/* <button className="start-button" onClick={handlePoseEstimation}>{isPoseEstimation? 'Stop' : 'Start'}</button> */}
         <button onClick={handleClick}>Switch camera</button>
-      </header>
     </div>
   );
 }

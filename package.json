@@ -3,6 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@material-ui/core": "^4.12.4",
+    "@material-ui/lab": "^4.0.0-alpha.61",
     "@tensorflow-models/posenet": "^2.2.2",
     "@tensorflow/tfjs": "^4.1.0",
     "@tensorflow/tfjs-backend-webgl": "^4.1.0",
