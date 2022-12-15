@@ -195,11 +195,11 @@ function App() {
           setIsPoseEstimation(current => !current);
           stopPoseEstimation();
           state = State.Waiting;
-          clearCanvas(canvasRef);
           console.debug('stopped pose estimation')
         } else {
           console.debug('nothing')
         }
+        clearCanvas(canvasRef);
 
       } else {
         if (workoutState.workout.length > 0) {
