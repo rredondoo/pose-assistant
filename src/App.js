@@ -1,4 +1,3 @@
-import logo from './logo.svg';
 import './App.css';
 import { Grid, AppBar, Toolbar, Typography, Button, Card, CardContent, CardActions } from '@material-ui/core';
 import { FormControl, InputLabel, NativeSelect, FormHelperText } from '@material-ui/core';
@@ -14,7 +13,11 @@ import CanvasComponent from './canvas';
 import AlertComponent from './alert';
 import { drawKeypoints, drawSkeleton } from './utilities';
 import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
-import { time } from '@tensorflow/tfjs';
+import { processData } from './dataProcessing';
+import { runTraining } from './modelTraining';
+
+
+
 
 class State {
   static Collecting = new State('collecting');
@@ -80,6 +83,7 @@ function App() {
   const [opCollectData, setOpCollectData] = useState('inactive');
   const [snackbarDataColl, setSnackbarDataColl] = useState(false);
   const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
+  const [dataCollect, setDataCollect] = useState(false);
 
   // useEffect hook persist object between refreshes
   useEffect(() => {
@@ -105,7 +109,7 @@ function App() {
 
     if (webcamRef &&
       webcamRef.current !== null &&
-      webcamRef.current.video.readyState == 4) {
+      webcamRef.current.video.readyState === 4) {
 
       poseEstimationInterval.current =  setInterval(() => {
 
@@ -130,7 +134,7 @@ function App() {
 
           console.log('STATE:   ' + state.toString());
 
-          if (state == 'collecting') {
+          if (state === 'collecting') {
             console.log(workoutState.workout);
           }
 
@@ -192,6 +196,7 @@ function App() {
     if (input === 'COLLECT_DATA') {
       if (isPoseEstimation){
         if (opCollectData === 'inactive') {
+          setDataCollect(false); // no data collection taking place
           setIsPoseEstimation(current => !current);
           stopPoseEstimation();
           state = State.Waiting;
@@ -202,6 +207,7 @@ function App() {
         clearCanvas(canvasRef);
 
       } else {
+        setDataCollect(true);
         if (workoutState.workout.length > 0) {
           setIsPoseEstimation(current => !current);
           startPoseEstimation();
@@ -252,6 +258,10 @@ function App() {
       [name]: event.target.value
       // name: event.target.value
     });
+  };
+
+  const handleTrainModel = async (event) => {
+    setDataCollect(true);
   };
 
   return (
@@ -334,7 +344,7 @@ function App() {
                               style={{ marginRight: 16 }} variant='contained'>
                         {isPoseEstimation? 'Stop' : 'Collect Data'}
                       </Button>
-                      <Button variant='contained'>
+                      <Button onClick={() => handleTrainModel()} variant='contained' disabled={dataCollect}>
                         Train Model
                       </Button>
                     </Typography>

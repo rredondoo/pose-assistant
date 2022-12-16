@@ -1,4 +1,4 @@
-import React, {useState, useRef} from 'react';
+import React from 'react';
 import Webcam from 'react-webcam';
 
 
@@ -26,8 +26,12 @@ const WebcamComponent = ({webcamRef, facingMode}) => {
 
     return (
         <>
-        <Webcam ref={webcamRef} mirrored={ true } id={'webcam'} audio={false} screenshotFormat='image/jpeg' videoConstraints={{ ...videoConstraints, facingMode}}
-                style={style}/>
+        <Webcam ref={webcamRef} mirrored={ true }
+            id={'webcam'}
+            audio={false}
+            screenshotFormat='image/jpeg'
+            videoConstraints={{ ...videoConstraints, facingMode}}
+                    style={style}/>
         </>
     )
 };
