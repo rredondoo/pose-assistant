@@ -5,7 +5,7 @@ import Webcam from 'react-webcam';
 export const FACING_MODE_USER = 'user';
 export const FACING_MODE_ENVIRONMENT = 'environment';
 
-const WebcamComponent = ({webcamRef, facingMode}) => {
+const WebcamComponent = ({webcamRef, facingMode, width, height}) => {
 
     const style = {
         marginTop: '10px',
@@ -17,7 +17,7 @@ const WebcamComponent = ({webcamRef, facingMode}) => {
         textAlign: 'center',
         zindex: 9,
         width: '100%',
-        height: 600
+        height: height
     };
 
     const videoConstraints = {

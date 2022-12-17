@@ -13,10 +13,8 @@ import CanvasComponent from './canvas';
 import AlertComponent from './alert';
 import { drawKeypoints, drawSkeleton } from './utilities';
 import { FACING_MODE_USER, FACING_MODE_ENVIRONMENT } from './webcam';
-import { processData } from './dataProcessing';
+import { processData, exercises } from './dataProcessing';
 import { runTraining } from './modelTraining';
-
-
 
 
 class State {
@@ -70,8 +68,11 @@ const delay = (time) => {
 
 function App() {
   const intervalTimeMS = 500;
+  const collectTimeMs = 5000;
   const classes = useStyles();
   let state = State.Waiting;
+  const windowWidth = 800;
+  const windowHeight = 600;
 
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
@@ -84,6 +85,11 @@ function App() {
   const [snackbarDataColl, setSnackbarDataColl] = useState(false);
   const [snackbarDataNotColl, setSnackbarDataNotColl] = useState(false);
   const [dataCollect, setDataCollect] = useState(false);
+  const [rawData, setRawData] = useState([]);
+  const [workoutState, setWorkoutState] = useState({
+    workout: '',
+    name: 'hai'
+  });
 
   // useEffect hook persist object between refreshes
   useEffect(() => {
@@ -96,7 +102,7 @@ function App() {
     let model = await posenet.load({
       architecture: 'MobileNetV1',
       outputStride: 16,
-      inputResolution: { width: 800, height: 600 },
+      inputResolution: { width: windowWidth, height: windowHeight },
       multiplier: 0.75
     });
 
@@ -105,11 +111,15 @@ function App() {
     console.log('PoseNet model loaded...')
   }
 
+  const isWebcamReady = () => {
+    return(webcamRef &&
+      webcamRef.current !== null &&
+      webcamRef.current.video.readyState === 4)
+  };
+
   const startPoseEstimation = () => {
 
-    if (webcamRef &&
-      webcamRef.current !== null &&
-      webcamRef.current.video.readyState === 4) {
+    if (isWebcamReady) {
 
       poseEstimationInterval.current =  setInterval(() => {
 
@@ -120,30 +130,70 @@ function App() {
         webcamRef.current.video.width = videoWidth;
         webcamRef.current.video.height = videoHeight;
 
+        // console.debug('VIDEOWIDTH:  ' + videoWidth);
+        // console.debug('VIDEOHEIGHT: ' + videoHeight);
+
         // pose estimation
-        let start = new Date().getTime();
+        let startTime = new Date().getTime();
+
+        // call estimateSinglePose from the posenet model and pass the webbcam ref variable
         model.estimateSinglePose(video, {
           flipHorizontal: true
 
         }).then(pose => {
-          let end = new Date().getTime();
-          let total = end - start;
 
-          console.log('Time: ' + total + 'ms');
-          // console.log('TF BACKEND: ' + tf.getBackend());
+          let endTime = new Date().getTime();
+          let totalTime = endTime - startTime;
 
-          console.log('STATE:   ' + state.toString());
+          let inputs = [];
 
-          if (state === 'collecting') {
-            console.log(workoutState.workout);
+          for (let i = 0; i < pose.keypoints.length; i++){
+
+            let x = pose.keypoints[i].position.x;
+            let y = pose.keypoints[i].position.y;
+
+            // if the confidence score is less than 0.1
+            // we want to set the values of x and y to 0
+            // to reduce the noise in the data
+            if (pose.keypoints[i].score < 0.1) {
+              x = 0;
+              y = 0;
+
+            // else, normalize the x and y
+            // to the range [-1, 1]
+            } else {
+
+              x = (2 * x / windowWidth) - 1;
+              y = (2 * y / windowHeight) - 1;
+
+              // console.debug('X:' + x);
+              // console.debug('Y:' + y);
+            }
+
+            inputs.push(x);
+            inputs.push(y);
           }
 
-          drawCanvas(pose, videoWidth, videoHeight, canvasRef)
+          console.log('STATE:      ' + state.toString());
+
+          if (state == 'collecting') {
+            console.log('TIME:       ' + totalTime + 'ms');
+            console.log('TF BACKEND: ' + tf.getBackend());
+            console.log('POSE:       ' + pose);
+            console.log('WORKOUT:    ' + workoutState.workout);
+
+            let newRawData = {xs: inputs, ys: workoutState.workout};
+
+            rawData.push(newRawData);
+            setRawData(rawData);
+
+          }
+
+          drawCanvas(pose, videoWidth, videoHeight, canvasRef);
         });
 
       }, intervalTimeMS)
 
-      // call estimateSinglePose from the posenet model and pass the webbcam ref variable
 
     } else {
       console.log('webcamRef is not defined:' + webcamRef)
@@ -178,12 +228,12 @@ function App() {
   const collectData = async () => {
 
     setOpCollectData('active');
-    await delay(10000); // 10s delay
+    await delay(collectTimeMs); //
 
     openSnackbarDataColl();
     state = State.Collecting;
 
-    await delay(10000); // run data collection for 10 seconds
+    await delay(collectTimeMs); // wait some time for data collection
 
     openSnackbarDataNotColl();
     state = State.Waiting;
@@ -194,13 +244,18 @@ function App() {
   const handlePoseEstimation = (input) => {
 
     if (input === 'COLLECT_DATA') {
-      if (isPoseEstimation){
+
+      if (isPoseEstimation) {
+
         if (opCollectData === 'inactive') {
+
           setDataCollect(false); // no data collection taking place
-          setIsPoseEstimation(current => !current);
+
+          setIsPoseEstimation(false);
           stopPoseEstimation();
           state = State.Waiting;
           console.debug('stopped pose estimation')
+
         } else {
           console.debug('nothing')
         }
@@ -208,11 +263,14 @@ function App() {
 
       } else {
         setDataCollect(true);
-        if (workoutState.workout.length > 0) {
-          setIsPoseEstimation(current => !current);
+
+        if (isWorkoutSelected()) {
+
+          setIsPoseEstimation(true);
           startPoseEstimation();
           collectData();
-          console.debug('started pose estimation')
+
+          console.debug('started pose estimation');
         }
       }
     }
@@ -246,11 +304,6 @@ function App() {
         : FACING_MODE_ENVIRONMENT
   )}, []);
 
-  const [workoutState, setWorkoutState] = useState({
-    workout: '',
-    name: 'hai'
-  });
-
   const handleWorkoutSelect = (event) => {
     const name = event.target.name;
     setWorkoutState({
@@ -261,8 +314,17 @@ function App() {
   };
 
   const handleTrainModel = async (event) => {
-    setDataCollect(true);
+
+    console.debug(rawData);
+    console.debug(rawData.length);
+
+    if (rawData.length > 0) {
+      console.log('RAW DATA LENGTH: ' + rawData.length);
+      const [featuresNum, trainData, valData] = processData(rawData);
+    }
   };
+
+  const isWorkoutSelected = () => workoutState.workout != '';
 
   return (
     <div className="App">
@@ -284,8 +346,8 @@ function App() {
         <Grid item xs={12}>
           <Card>
             <CardContent >
-              <WebcamComponent webcamRef={webcamRef} facingMode={facingMode}/>
-              <CanvasComponent canvasRef={canvasRef}/>
+              <WebcamComponent webcamRef={webcamRef} facingMode={facingMode} width={windowWidth} height={windowHeight} />
+              <CanvasComponent canvasRef={canvasRef} width={windowWidth} height={windowHeight}/>
             </CardContent>
             <CardActions style={{justifyContent: 'center'}}>
               <Grid container spacing={0}>
@@ -325,15 +387,15 @@ function App() {
                 </Grid>
                 <Grid item xs={12} className={classes.singleLine}>
                   <FormControl required className={classes.formControl}>
-                    <InputLabel htmlFor='age-native-helper'>Workout</InputLabel>
+                    <InputLabel htmlFor='age-native-helper'>Select workout</InputLabel>
                     <NativeSelect value={workoutState.workout} onChange={handleWorkoutSelect} inputProps={{
                       name: 'workout',
                       id: 'age-native-helper'
                     }}>
                       <option aria-label='None' value=''></option>
-                      <option value={'JUMPING_JACKS'}>Jumping Jacks</option>
-                      <option value={'WALL_SIT'}>Wall-sit</option>
-                      <option value={'LUNGES'}>Lunges</option>
+                      <option value={exercises[0].id}>{exercises[0].name}</option>
+                      <option value={exercises[1].id}>{exercises[1].name}</option>
+                      <option value={exercises[2].id}>{exercises[2].name}</option>
                     </NativeSelect>
                     <FormHelperText>Select training data type</FormHelperText>
                   </FormControl>
@@ -341,7 +403,7 @@ function App() {
                     <Typography style={{ marginRight: 16 }}>
                       <Button onClick={() => handlePoseEstimation('COLLECT_DATA')}
                               color={isPoseEstimation ? 'secondary' : 'default'}
-                              style={{ marginRight: 16 }} variant='contained'>
+                              style={{ marginRight: 16 }} variant='contained' disabled={ !isWorkoutSelected() }>
                         {isPoseEstimation? 'Stop' : 'Collect Data'}
                       </Button>
                       <Button onClick={() => handleTrainModel()} variant='contained' disabled={dataCollect}>

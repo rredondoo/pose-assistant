@@ -1,4 +1,4 @@
-const CanvasComponent = ({canvasRef}) => {
+const CanvasComponent = ({canvasRef, width, height}) => {
 
     const canvasStyle = {
         position: 'absolute',
@@ -11,7 +11,7 @@ const CanvasComponent = ({canvasRef}) => {
         textAlign: 'center',
         zindex: 9,
         width: '100%',
-        height: 600
+        height: height
       };
 
     return (
