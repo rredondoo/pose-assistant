@@ -68,7 +68,7 @@ const delay = (time) => {
 
 function App() {
   const intervalTimeMS = 250;
-  const collectTimeMs = 10000;
+  const collectTimeMs = 20000;
   const classes = useStyles();
   let state = State.Waiting;
   const windowWidth = 800; // TODO make it responsive
@@ -90,6 +90,7 @@ function App() {
     workout: '',
     name: 'hai'
   });
+  const [trainingModel, setTrainingModel] = useState(false);
 
   // useEffect hook persist object between refreshes
   useEffect(() => {
@@ -229,7 +230,7 @@ function App() {
   const collectData = async () => {
 
     setOpCollectData('active');
-    await delay(collectTimeMs); //
+    await delay(3000); //
 
     openSnackbarDataColl();
     state = State.Collecting;
@@ -316,16 +317,20 @@ function App() {
 
   const handleTrainModel = async (event) => {
 
-    console.debug(rawData);
-    console.debug(rawData.length);
-
     if (rawData.length > 0) {
+
       console.log('RAW DATA LENGTH: ' + rawData.length);
-      const [featuresNum, trainData, valData] = processData(rawData);
+
+      const [trainData, valData, featuresNum] = processData(rawData);
+      setTrainingModel(true);
+      await runTraining(trainData, valData, featuresNum);
+      setTrainingModel(false);
     }
   };
 
   const isWorkoutSelected = () => workoutState.workout != '';
+
+  const isCollectButtonDisabled = () => (!isWorkoutSelected && trainingModel);
 
   return (
     <div className="App">
@@ -404,10 +409,14 @@ function App() {
                     <Typography style={{ marginRight: 16 }}>
                       <Button onClick={() => handlePoseEstimation('COLLECT_DATA')}
                               color={isPoseEstimation ? 'secondary' : 'default'}
-                              style={{ marginRight: 16 }} variant='contained' disabled={ !isWorkoutSelected() }>
+                              style={{ marginRight: 16 }}
+                              variant='contained'
+                              disabled={ isCollectButtonDisabled() }>
                         {isPoseEstimation? 'Stop' : 'Collect Data'}
                       </Button>
-                      <Button onClick={() => handleTrainModel()} variant='contained' disabled={dataCollect}>
+                      <Button onClick={() => handleTrainModel()}
+                              variant='contained'
+                              disabled={dataCollect}>
                         Train Model
                       </Button>
                     </Typography>

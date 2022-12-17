@@ -6,15 +6,15 @@ const exercises = {
     2: {id: 'LUNGES', name: 'Lunges'},
   };
 
-const oneHot = (x, y) => {
+  const oneHot = ({ xs, ys }) => {
 
-    y = [
-        y === exercises[0].id ? 1 : 0,
-        y === exercises[1].id ? 1 : 0,
-        y === exercises[2].id ? 1 : 0
+    const labels = [
+        ys === exercises[0].id ? 1 : 0,
+        ys === exercises[1].id ? 1 : 0,
+        ys === exercises[2].id ? 1 : 0
     ];
 
-    return {xs: x, ys: y};
+    return { xs: xs, ys: labels };
 };
 
 const processData = (rawData) => {
@@ -33,14 +33,14 @@ const processData = (rawData) => {
 
     // encode the target labels into one-hot incoding
     // and batch the data
-    trainData = trainData.map(({x, y}) => oneHot(x, y)).batch(32);
-    valData = valData.map(({x, y}) => oneHot(x, y)).batch(32);
+    trainData = trainData.map(({ xs, ys }) => oneHot({ xs, ys })).batch(16);
+    valData = valData.map(({ xs, ys }) => oneHot({ xs, ys })).batch(16);
 
     // posenet returns a pair of 17 keypoints (x and y values)
     // so the features size is 17 * 2 = 34
     const featuresNum = rawData[0].xs.length;
 
-    return [featuresNum, trainData, valData];
+    return [trainData, valData, featuresNum];
 };
 
 export { processData, exercises };
