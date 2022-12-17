@@ -36,9 +36,9 @@ const processData = (rawData) => {
     trainData = trainData.map(({x, y}) => oneHot(x, y)).batch(32);
     valData = valData.map(({x, y}) => oneHot(x, y)).batch(32);
 
-    // posenet returns 17 keypoints
-    // we need to double that amount
-    const featuresNum = 2 * 17
+    // posenet returns a pair of 17 keypoints (x and y values)
+    // so the features size is 17 * 2 = 34
+    const featuresNum = rawData[0].xs.length;
 
     return [featuresNum, trainData, valData];
 };

@@ -67,11 +67,11 @@ const delay = (time) => {
 };
 
 function App() {
-  const intervalTimeMS = 500;
-  const collectTimeMs = 5000;
+  const intervalTimeMS = 250;
+  const collectTimeMs = 10000;
   const classes = useStyles();
   let state = State.Waiting;
-  const windowWidth = 800;
+  const windowWidth = 800; // TODO make it responsive
   const windowHeight = 600;
 
   const webcamRef = useRef(null);
@@ -181,6 +181,7 @@ function App() {
             console.log('TF BACKEND: ' + tf.getBackend());
             console.log('POSE:       ' + pose);
             console.log('WORKOUT:    ' + workoutState.workout);
+            console.log('-----------------------------------------------');
 
             let newRawData = {xs: inputs, ys: workoutState.workout};
 
